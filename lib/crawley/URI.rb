@@ -6,6 +6,7 @@ module URI
   # @return [URI]
   def self.make_absolute(root, page_path, href)
     href = href.split('#')[0]
+    href = '' if href.nil?
     root_url = root.to_s
 
     if href.start_with?('/')
