@@ -23,13 +23,20 @@ module Crawley
     private
 
     def make_request(url, request_type)
+      original_url = url
       found = false
       hops = 0
       until found
         puts "\tmaking request to #{url}"
         host, port = url.host, url.port if url.host && url.port
         path = url.path.nil? || url.path.empty? ? '/' : url.path
-        response = Net::HTTP.start(host, port) {|http|  http.request(request_type.new(path)) }
+        request = request_type.new(path)
+        begin
+          response = Net::HTTP.start(host, port) {|http|  http.request(request) }
+        rescue
+          @failed_paths << original_url
+          found = true
+        end
 
         if response.kind_of?(Net::HTTPOK)
           found = true
@@ -43,9 +50,11 @@ module Crawley
             found = true
           end
 
-          found = true if hops == 4
+          if hops == 4
+            found = true
+          end
         else
-          @failed_paths << url
+          @failed_paths << original_url
           found = true
         end
       end

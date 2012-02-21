@@ -5,7 +5,8 @@ require 'gli'
 require 'gli_version'
 
 require 'crawley'
-require 'crawley/version'
+require 'version'
+require 'url_verifier'
 
 include GLI
 
@@ -14,7 +15,9 @@ version Crawley::VERSION
 desc 'verify the urls from a csv'
 command :verify, :v do |c|
   c.action do |global_options, options, args|
-    Crawley::UrlVerifier.new '', args[0]
+    path = File.expand_path File.join(args[0])
+    verifier = Crawley::UrlVerifier.new 'http://localhost:9292', path
+    verifier.verify
   end
 end
 
