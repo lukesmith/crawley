@@ -1,47 +1,55 @@
 require 'net/http'
-require 'uri'
-require 'rainbow'
 
-class Http
+class HTTP
 
-  def exists?(url)
+  def initialize
+    @failed_paths = []
+  end
+
+  def failed_paths
+    @failed_paths
+  end
+
+  def head(url)
+    @failed_paths = []
+    make_request url, Net::HTTP::Head
+  end
+
+  def get(url)
+    make_request url, Net::HTTP::Get
+  end
+
+  private
+
+  def make_request(url, request_type)
     found = false
-    res = nil
+    hops = 0
     until found
-      puts "    making request to #{url}"
+      puts "\tmaking request to #{url}"
       host, port = url.host, url.port if url.host && url.port
-      req = Net::HTTP::Head.new(url.path)
-      res = Net::HTTP.start(host, port) {|http|  http.request(req) }
-      res.header['location'] ? url = URI.parse(res.header['location']) : found = true
+      path = url.path.nil? || url.path.empty? ? '/' : url.path
+      response = Net::HTTP.start(host, port) {|http|  http.request(request_type.new(path)) }
 
-      unless url.host == 'localhost'
+      if response.kind_of?(Net::HTTPOK)
+        found = true
+      elsif response.kind_of?(Net::HTTPRedirection)
+        hops = hops + 1
+        redirect_url = URI.parse(response.header['location'])
+
+        if redirect_url.host == url.host
+          url = redirect_url
+        else
+          found = true
+        end
+
+        found = true if hops == 4
+      else
+        @failed_paths << url
         found = true
       end
     end
 
-    res
-  end
-
-  def get(url)
-    found = false
-    res = nil
-    hops = 0
-    until found
-      puts "    making request to #{url}"
-      host, port = url.host, url.port if url.host && url.port
-      path = url.path.nil? || url.path.empty? ? '/' : url.path
-      req = Net::HTTP::Get.new(path)
-      res = Net::HTTP.start(host, port) {|http| http.request(req) }
-      redirect_url = nil
-      res.header['location'] ? redirect_url = URI.parse(res.header['location']) : found = true
-
-      unless redirect_url.nil?
-        found = (redirect_url.host != url.host) || (hops == 3)
-        hops = hops + 1
-      end
-    end
-
-    res
+    response
   end
 
 end
