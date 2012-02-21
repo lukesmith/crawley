@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 $:.push File.expand_path(File.dirname(File.realpath(__FILE__)) + '/../lib')
 
-require 'crawley'
+require 'crawley/CLI'
 
-Crawley::Crawley::run
+# Invoke the command
+exit GLI.run(ARGV)

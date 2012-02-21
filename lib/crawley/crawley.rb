@@ -10,8 +10,8 @@ require 'crawley/crawler'
 module Crawley
   class Crawley
 
-    def self.run
-      url = URI.parse('http://localhost:9292')
+    def self.run(url)
+      url = URI.parse(url)
 
       crawler = Crawler.new url
       crawler.crawl
